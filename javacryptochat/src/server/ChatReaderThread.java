@@ -7,10 +7,10 @@ import java.net.Socket;
 public class ChatReaderThread extends Thread {
 
 	private Socket socket = null;
-	private ChatClient client = null;
+	private ConsoleReader client = null;
 	private DataInputStream streamIn = null;
 
-	public ChatReaderThread(ChatClient _client, Socket _socket) {
+	public ChatReaderThread(ConsoleReader _client, Socket _socket) {
 		client = _client;
 		socket = _socket;
 		open();

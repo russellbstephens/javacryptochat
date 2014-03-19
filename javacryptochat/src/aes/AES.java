@@ -9,13 +9,12 @@ import javax.crypto.spec.SecretKeySpec;
 
 public class AES {
 	static String IV = "AAAAAAAAAAAAAAAA";
-	static byte[] encryptionKey;
+	static byte[] encryptionKey = "87A5CF97F3B6ABCDA92A4B3CE0994DC3C68858798381ED1DFA2A1BFCCAE804C3".getBytes();
 	static final String SALT = "The quick brown fox jumps over the lazy dog";
 	static final String ALGORITHM = "AES";
 	static final String CIPHER = "AES/CBC/PKCS5Padding";
 	public static void main(String[] args) {
-		
-		encryptionKey = "87A5CF97F3B6ABCDA92A4B3CE0994DC3C68858798381ED1DFA2A1BFCCAE804C3".getBytes();
+	
 		String plaintext = "test text 123\0\0\0";
 		
 		try {
@@ -23,14 +22,14 @@ public class AES {
 			System.out.println("==Java==");
 			System.out.println("plain:   " + plaintext);
 
-			byte[] cipher = encrypt(plaintext, encryptionKey);
+			byte[] cipher = encrypt(plaintext);
 
 			System.out.print("cipher:  ");
 			for (int i = 0; i < cipher.length; i++)
 				System.out.print(new Integer(cipher[i]) + " ");
 			System.out.println("");
 
-			String decrypted = decrypt(cipher, encryptionKey);
+			String decrypted = decrypt(cipher);
 
 			System.out.println("decrypt: " + decrypted);
 
@@ -39,7 +38,7 @@ public class AES {
 		}
 	}
 	
-	public static byte[] encrypt(String plainText, byte[] encryptionKey)
+	public static byte[] encrypt(String plainText)
 			throws Exception {
 
 		MessageDigest sha = MessageDigest.getInstance("SHA-256");
@@ -55,7 +54,7 @@ public class AES {
 
 	}
 
-	public static String decrypt(byte[] cipherText, byte[] encryptionKey)
+	public static String decrypt(byte[] cipherText)
 			throws Exception {
 
 		MessageDigest sha = MessageDigest.getInstance("SHA-256");
