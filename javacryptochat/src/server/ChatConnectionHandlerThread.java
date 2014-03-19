@@ -24,27 +24,6 @@ public class ChatConnectionHandlerThread extends Thread {
 		ID = socket.getPort();
 	}
 
-//	@SuppressWarnings("deprecation")
-//	public void send(String msg) {
-//		
-//		try {
-//			String encryptedMsg = new String(AES.encrypt(msg));
-//			
-//			try {
-//				streamOut.writeUTF(encryptedMsg);
-//				streamOut.flush();
-//			} catch (IOException ioe) {
-//				System.out.println(ID + " ERROR sending: " + ioe.getMessage());
-//				server.remove(ID);
-//				stop();
-//			}
-//		} catch (Exception e) {
-//			// TODO Auto-generated catch block
-//			e.printStackTrace();
-//		}
-//		
-//	}
-
 	public int getID() {
 		return ID;
 	}
@@ -52,14 +31,12 @@ public class ChatConnectionHandlerThread extends Thread {
 	public synchronized void handle(int ID, String input) {
 		try {
 			String decryptedInput = AES.decrypt(input.getBytes());
-			System.out.println(ID + ": " + decryptedInput);
-//
-//			if (decryptedInput.equals(".bye")) {
-//				server.clients[server.findClient(ID)].send(".bye");
-//				server.remove(ID);
-//			} else
-//				for (int i = 0; i < server.clientCount; i++)
-//					server.clients[i].send(ID + ": " + decryptedInput);
+			final int IDENTIFIER_LENGTH = 10;
+			
+			String identifier = decryptedInput.substring(0, IDENTIFIER_LENGTH);
+			String msg = decryptedInput.substring(IDENTIFIER_LENGTH);
+			System.out.println(identifier + ": " + msg);
+
 		} catch (Exception e) {
 			
 			e.printStackTrace();
@@ -69,7 +46,7 @@ public class ChatConnectionHandlerThread extends Thread {
 	
 	@SuppressWarnings("deprecation")
 	public void run() {
-		System.out.println("Server Thread " + ID + " running.");
+		System.out.println("Chat Connection Thread " + ID + " running.");
 		while (true) {
 			try {
 				handle(ID, streamIn.readUTF());

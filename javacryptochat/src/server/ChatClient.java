@@ -15,7 +15,7 @@ public class ChatClient implements Runnable
 	public int clientCount = 0;
 
 	public ChatClient(int port) {
-//		
+
 		try {
 			System.out
 					.println("Binding to port " + port + ", please wait  ...");
