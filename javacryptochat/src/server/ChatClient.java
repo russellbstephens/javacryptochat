@@ -1,7 +1,6 @@
 package server;
 
 import java.io.BufferedReader;
-import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -12,50 +11,93 @@ import aes.AES;
 
 public class ChatClient implements Runnable {
 	private Socket socket = null;
-	private Thread thread = null;
+	private Thread clientThread = null;
 	private BufferedReader console = null;
 	private DataOutputStream streamOut = null;
-	private ChatClientThread client = null;
+	private ChatReaderThread client = null;
 	private final String AES_KEY = "87A5CF97F3B6ABCDA92A4B3CE0994DC3C68858798381ED1DFA2A1BFCCAE804C3";
 
-	public ChatClient(String serverName, int serverPort) {
+	public ChatClient() {
+
+		try {
+			start();
+			run();
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		
+	}
+
+	public void connectToClientAtAddress(String serverName, int serverPort) {
 		System.out.println("Establishing connection. Please wait ...");
 		try {
 			socket = new Socket(serverName, serverPort);
 			System.out.println("Connected: " + socket);
 			start();
+			streamOut = new DataOutputStream(socket.getOutputStream());
+			if (clientThread == null) {
+				client = new ChatReaderThread(this, socket);
+				clientThread = new Thread(this);
+				clientThread.start();
+			}
 		} catch (UnknownHostException uhe) {
 			System.out.println("Host unknown: " + uhe.getMessage());
 		} catch (IOException ioe) {
 			System.out.println("Unexpected exception: " + ioe.getMessage());
 		}
+		
+	}
+
+	public String handleConsoleInput() {
+		String consoleInput = "";
+		try {
+			consoleInput = console.readLine();
+		} catch (IOException e) {
+			
+			e.printStackTrace();
+		}
+		//read args
+		final int serverNameLength = 9;// localhost
+		final int portNumberLength = 4; //xxxx
+		String serverName = consoleInput.substring(0, serverNameLength);
+		int portNumber = Integer.valueOf(consoleInput.substring(serverNameLength, serverNameLength+portNumberLength));
+		//connect to client
+		this.connectToClientAtAddress(serverName, portNumber);
+		//encrypt msg to send
+		String encryptedMsg = "";
+		try {
+			encryptedMsg = new String(AES.encrypt(consoleInput.substring(serverNameLength+portNumberLength),
+					this.getAESKeyBytes()));
+		} catch (Exception e) {
+			
+			e.printStackTrace();
+		}
+		return encryptedMsg;
 	}
 
 	public void run() {
-		while (thread != null) {
+		//while (clientThread != null) {
+
+			String encryptedText;
 			try {
-				String encryptedText;
-				try {
-					encryptedText = new String(AES.encrypt(console.readLine(), this.getAESKeyBytes()));
-					streamOut.writeUTF(encryptedText);
-					streamOut.flush();
-				} catch (IOException ioe) {
-					System.out.println("Sending error: " + ioe.getMessage());
-					stop();
-				}
-				} catch (Exception e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
-				}
-				
-		}
+				encryptedText = this.handleConsoleInput();
+				streamOut.writeUTF(encryptedText);
+				streamOut.flush();
+			} catch (IOException ioe) {
+				System.out.println("Sending error: " + ioe.getMessage());
+				stop();
+			}
+
+		//}
 	}
 
 	public void handle(String msg) {
-		
+
 		try {
-			String decryptedInput = AES.decrypt(msg.getBytes(), this.getAESKeyBytes());
-			
+			String decryptedInput = AES.decrypt(msg.getBytes(),
+					this.getAESKeyBytes());
+
 			if (decryptedInput.equals(".bye")) {
 				System.out.println("Good bye. Press RETURN to exit ...");
 				stop();
@@ -66,23 +108,18 @@ public class ChatClient implements Runnable {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
-		
+
 	}
 
 	public void start() throws IOException {
 		console = new BufferedReader(new InputStreamReader(System.in));
-		streamOut = new DataOutputStream(socket.getOutputStream());
-		if (thread == null) {
-			client = new ChatClientThread(this, socket);
-			thread = new Thread(this);
-			thread.start();
-		}
+		
 	}
 
 	public void stop() {
-		if (thread != null) {
-			thread.stop();
-			thread = null;
+		if (clientThread != null) {
+			clientThread.stop();
+			clientThread = null;
 		}
 		try {
 			if (console != null)
@@ -101,50 +138,9 @@ public class ChatClient implements Runnable {
 	public byte[] getAESKeyBytes() {
 		return this.AES_KEY.getBytes();
 	}
-	
+
 	public static void main(String args[]) {
-		ChatClient client = new ChatClient("localhost", 7891);
-	}
-}
-
-class ChatClientThread extends Thread {
-	private Socket socket = null;
-	private ChatClient client = null;
-	private DataInputStream streamIn = null;
-
-	public ChatClientThread(ChatClient _client, Socket _socket) {
-		client = _client;
-		socket = _socket;
-		open();
-		start();
-	}
-
-	public void open() {
-		try {
-			streamIn = new DataInputStream(socket.getInputStream());
-		} catch (IOException ioe) {
-			System.out.println("Error getting input stream: " + ioe);
-			client.stop();
-		}
-	}
-
-	public void close() {
-		try {
-			if (streamIn != null)
-				streamIn.close();
-		} catch (IOException ioe) {
-			System.out.println("Error closing input stream: " + ioe);
-		}
-	}
-
-	public void run() {
-		while (true) {
-			try {
-				client.handle(streamIn.readUTF());
-			} catch (IOException ioe) {
-				System.out.println("Listening error: " + ioe.getMessage());
-				client.stop();
-			}
-		}
+		ChatClient client = new ChatClient();
+		 
 	}
 }
