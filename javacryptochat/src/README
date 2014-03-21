@@ -1,0 +1,28 @@
+In addition to the code found in the directories driver, server, and
+aes, you will also find a makefile that can be used to complile and
+run the application.
+
+First, build the application by running:
+	make build
+
+Next, you can run a test user instance by running:
+	make testuser1
+
+Two additional users can be simulated by running:
+	make testuser2
+	or
+	make testuser3
+
+Messages are formatted as follows:
+	first 9 letters are for destination address (ex, localhost)
+	next 4 are for the destination port
+	next 10 are for your identifier
+	remaining letters are the message
+
+The following are some examples of input:
+	localhost7891client 1  hi there
+	localhost7892benjaminb hello this is a message
+	localhost7893identifierhello there
+
+Class files can be cleaned up by running:
+	make clean
