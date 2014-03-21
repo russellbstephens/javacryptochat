@@ -15,7 +15,7 @@ public class ChatClient implements Runnable
 	public int clientCount = 0;
 
 	public ChatClient(int port) {
-
+		this.removeCryptographyRestrictions();
 		try {
 			System.out
 					.println("Binding to port " + port + ", please wait  ...");
@@ -30,6 +30,36 @@ public class ChatClient implements Runnable
 		this.consoleReader = new Thread(new ConsoleReader());
 	}
 
+	private void removeCryptographyRestrictions() {
+	    if (!isRestrictedCryptography()) {
+	        return;
+	    }
+	    try {
+	        java.lang.reflect.Field isRestricted;
+	        try {
+	            final Class<?> c = Class.forName("javax.crypto.JceSecurity");
+	            isRestricted = c.getDeclaredField("isRestricted");
+	        } catch (final ClassNotFoundException e) {
+	            try {
+	                // Java 6 has obfuscated JCE classes
+	                final Class<?> c = Class.forName("javax.crypto.SunJCE_b");
+	                isRestricted = c.getDeclaredField("g");
+	            } catch (final ClassNotFoundException e2) {
+	                throw e;
+	            }
+	        }
+	        isRestricted.setAccessible(true);
+	        isRestricted.set(null, false);
+	    } catch (final Throwable e) {
+	        System.err.println(
+	                "Failed to remove cryptography restrictions"+ e.getMessage());
+	    }
+	}
+
+	private static boolean isRestrictedCryptography() {
+	    return "Java(TM) SE Runtime Environment"
+	            .equals(System.getProperty("java.runtime.name"));
+	}
 	public void run() {
 		while (serverThread != null) {
 			try {
